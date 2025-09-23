@@ -1,5 +1,5 @@
 from django.db import models
-from users.models import Users
+from client.models import Users
 
 class Vehicle(models.Model):
     user = models.ForeignKey(Users, on_delete=models.CASCADE, related_name='vehicles')

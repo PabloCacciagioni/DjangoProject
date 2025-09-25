@@ -1,17 +1,18 @@
 from django.db import models
-from client.models import Users
+from django.conf import settings
 
 class Vehicle(models.Model):
-    user = models.ForeignKey(Users, on_delete=models.CASCADE, related_name='vehicles')
-    
-    make = models.CharField(max_length=50)
-    model = models.CharField(max_length=50)
-    registration = models.CharField(max_length=50, unique=True)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='vehicles')
+    brand = models.CharField(max_length=100)
+    model = models.CharField(max_length=100)
     year = models.PositiveIntegerField()
-    color = models.CharField(max_length=30, blank=True, null=True)
+    vin = models.CharField(max_length=17, unique=True)
+    plate = models.CharField(max_length=10, unique=True)
+    color = models.CharField(max_length=50)
+    delivery_date = models.DateField()
     
-    create = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-    
+    class Meta:
+        ordering = ['-delivery_date']
+        
     def __str__(self):
-        return f'{self.make} {self.model} ({self.registration})'
+        return f"{self.brand} {self.model} ({self.plate})"

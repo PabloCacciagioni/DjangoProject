@@ -1,30 +1,51 @@
+import uuid
 from django.db import models
+from django.conf import settings
 from vehicles.models import Vehicle
-from services.models import Service
-from spareparts.models import SparePart
 
 class Turn(models.Model):
-    STATES = [
-        ("PENDING", "Pending"),
-        ("CONFIRMED", "Confirmed"),
-        ("FINISHED", "Finished"),
-        ("CANCELED", "Canceled")
-    ]
+    class StateChoices(models.TextChoices):
+        PENDING = 'PENDING', 'Pending'
+        IN_PROGRESS = 'IN_PROGRESS', 'In Progress'
+        COMPLETED = 'COMPLETED', 'Completed'
+        CANCELLED = 'CANCELLED', 'Cancelled'
+        
+    id = models.AutoField(primary_key=True, default=uuid.uuid4, editable=False)
     
-    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='turns')
-    date = models.DateField()
-    hour = models.TimeField()
-    state = models.CharField(max_length=10, choices=STATES, default="PENDING")
-    description = models.TextField(blank=True, null=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='turns_solicited'
+    )
+    mechanic = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='turns_assigned'
+    )
     
-    # Relations with services and spare parts
-    services = models.ManyToManyField(Service, blank=True, related_name='turns')
-    spareparts = models.ManyToManyField(SparePart, blank=True, related_name='turns')
+    vehicle = models.ForeignKey(
+        Vehicle,
+        on_delete=models.CASCADE,
+        related_name='turns'
+    )
     
-    create = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
+    start_date_time = models.DateTimeField()
+    end_date_time = models.DateTimeField()
     
+    state = models.CharField(
+        max_length=20,
+        choices=StateChoices.choices,
+        default=StateChoices.PENDING
+    )
+    
+    description_service = models.TextField()
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        
     def __str__(self):
-        return f'Turn {self.date} at {self.hour} - {self.vehicle}'
-
-
+        return f'Turn {self.id} - {self.vehicle} - ({self.state})'
